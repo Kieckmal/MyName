@@ -250,7 +250,22 @@ button.ghost{background:#202735}
         <button class="ghost" onclick="resetWorld()">Neue Welt / Reset</button>
       </div>
 
-      <div class="sectiontitle">Poolstatus</div>
+      
+      <div class="sectiontitle">Deck Generator</div>
+      <div class="row">
+        <div>
+          <label>Deckgröße</label>
+          <input id="deckSize" type="number" min="10" max="40" value="10">
+        </div>
+        <div style="display:flex;align-items:end">
+          <button class="primary" onclick="generateDeck()">Ganzes Deck erstellen</button>
+        </div>
+      </div>
+      <div class="small" style="margin-top:6px">
+        Erstellt und bindet sofort ein vollständiges Deck. Minimum: 10 Karten.
+      </div>
+
+<div class="sectiontitle">Poolstatus</div>
       <div class="stats">
         <div class="stat"><span class="small">Normal frei</span><b id="sNormal">100</b></div>
         <div class="stat"><span class="small">Klasse frei</span><b id="sClass">100</b></div>
@@ -307,6 +322,10 @@ button.ghost{background:#202735}
         <div class="sidebar-note">
           <b>Feste Skills</b>
           <div id="skillPreview" class="small">Bei einer gewürfelten Karte werden hier die aktuell erkannten Klassen-Skills gezeigt.</div>
+        </div>
+        <div class="sidebar-note">
+          <b>Aktuelles Deck</b>
+          <div id="deckSummary" class="small">Noch kein Deck erzeugt.</div>
         </div>
         <div class="sidebar-note">
           <b>Designziel</b>
@@ -461,26 +480,51 @@ const hidden = [
 ];
 
 const itemBases = [
-["Suppenkelle","Haushalt","🥄"],["Kaffeetasse","Haushalt","☕"],["Toilettenbürste","Haushalt","🧹"],["Regenschirm","Haushalt","☂️"],
-["Bürostuhl","Büro","🪑"],["Tacker","Büro","📎"],["Bleistift","Büro","✏️"],["Staubsaugerbeutel","Haushalt","🧺"],["Nudelholz","Küche","🥖"],
-["Pfannenwender","Küche","🍳"],["Schaufel","Werkzeug","⛏️"],["Gartenschere","Werkzeug","✂️"],["Wasserwaage","Werkzeug","📏"],["Bohrmaschine","Werkzeug","🛠️"],
-["Schraubenschlüssel","Werkzeug","🔧"],["Klebebandrolle","Werkzeug","🩹"],["Fahrradkette","Schrott","⛓️"],["Autobatterie","Schrott","🔋"],["Toaster","Haushalt","🍞"],
-["Verlängerungskabel","Haushalt","🔌"],["Revolver","Waffe","🔫"],["Steinschlosspistole","Waffe","🔫"],["Nagelpistole","Werkzeug","🔩"],
-["Wasserpistole","Spielzeug","🔫"],["Signalpistole","Waffe","🔫"],["Breitschwert","Waffe","⚔️"],["Küchenmesser","Küche","🔪"],["Rostiger Säbel","Waffe","🗡️"],
-["Hammer","Werkzeug","🔨"],["Brechstange","Werkzeug","🪛"],["Armbanduhr","Zeitobjekt","⌚"],["Küchenuhr","Zeitobjekt","⏲️"],["Taschenuhr","Zeitobjekt","🕰️"],
-["Wecker","Zeitobjekt","⏰"],["Sanduhr","Zeitobjekt","⌛"],["Aktentasche","Büro","💼"],["Klemmbrett","Büro","📋"],["Locher","Büro","🗜️"],["Ordner","Büro","🗂️"],
-["Taschenrechner","Büro","🧮"],["Gebiss","Medizin","🦷"],["Prothese","Medizin","🦾"],["Gummihandschuh","Medizin","🧤"],["Verbandrolle","Medizin","🩹"],
-["Skalpell","Medizin","🔪"],["Blumenvase","Bestattung","🏺"],["Grabkerze","Bestattung","🕯️"],["Schwarze Krawatte","Bestattung","👔"],["Totengräberspaten","Bestattung","⛏️"],
-["Urne","Bestattung","⚱️"],["Spielkarte","Glücksspiel","🃏"],["Gezinkter Würfel","Glücksspiel","🎲"],["Pokerchip","Glücksspiel","🪙"],["Münze","Glücksspiel","🪙"],
-["Badezimmerwaage","Haushalt","⚖️"],["Kochtopf","Küche","🍲"],["Bratpfanne","Küche","🍳"],["Fleischklopfer","Küche","🔨"],["Salzstreuer","Küche","🧂"],
-["Thermoskanne","Haushalt","🧴"],["Ritterhelm","Rüstung","🪖"],["Kettenhemd","Rüstung","🛡️"],["Ehering","Relikt","💍"],["Gebetsbuch","Relikt","📖"],
-["Kerzenständer","Relikt","🕯️"],["Motorradhelm","Rüstung","🪖"],["Schweißgerät","Maschine","🔥"],["Zahnrad","Maschine","⚙️"],["Kolben","Maschine","⚙️"],
-["Metallplatte","Maschine","🛡️"],["Fernbedienung","Elektronik","📺"],["Gamepad","Elektronik","🎮"],["Diskette","Elektronik","💾"],["Altes Handy","Elektronik","📱"],
-["Kassettenrekorder","Elektronik","📻"],["Kopfhörer","Elektronik","🎧"],["Kabelmaus","Elektronik","🖱️"],["Druckerpatrone","Elektronik","🖨️"],["CD-ROM","Elektronik","💿"],
-["Taschenlampe","Elektronik","🔦"]
+["Suppenkelle","Haushalt","🥄","f"],["Kaffeetasse","Haushalt","☕","f"],["Toilettenbürste","Haushalt","🧹","f"],["Regenschirm","Haushalt","☂️","m"],
+["Bürostuhl","Büro","🪑","m"],["Tacker","Büro","📎","m"],["Bleistift","Büro","✏️","m"],["Staubsaugerbeutel","Haushalt","🧺","m"],["Nudelholz","Küche","🥖","n"],
+["Pfannenwender","Küche","🍳","m"],["Schaufel","Werkzeug","⛏️","f"],["Gartenschere","Werkzeug","✂️","f"],["Wasserwaage","Werkzeug","📏","f"],["Bohrmaschine","Werkzeug","🛠️","f"],
+["Schraubenschlüssel","Werkzeug","🔧","m"],["Klebebandrolle","Werkzeug","🩹","f"],["Fahrradkette","Schrott","⛓️","f"],["Autobatterie","Schrott","🔋","f"],["Toaster","Haushalt","🍞","m"],
+["Verlängerungskabel","Haushalt","🔌","n"],["Revolver","Waffe","🔫","m"],["Steinschlosspistole","Waffe","🔫","f"],["Nagelpistole","Werkzeug","🔩","f"],
+["Wasserpistole","Spielzeug","🔫","f"],["Signalpistole","Waffe","🔫","f"],["Breitschwert","Waffe","⚔️","n"],["Küchenmesser","Küche","🔪","n"],["Rostiger Säbel","Waffe","🗡️","m"],
+["Hammer","Werkzeug","🔨","m"],["Brechstange","Werkzeug","🪛","f"],["Armbanduhr","Zeitobjekt","⌚","f"],["Küchenuhr","Zeitobjekt","⏲️","f"],["Taschenuhr","Zeitobjekt","🕰️","f"],
+["Wecker","Zeitobjekt","⏰","m"],["Sanduhr","Zeitobjekt","⌛","f"],["Aktentasche","Büro","💼","f"],["Klemmbrett","Büro","📋","n"],["Locher","Büro","🗜️","m"],["Ordner","Büro","🗂️","m"],
+["Taschenrechner","Büro","🧮","m"],["Gebiss","Medizin","🦷","n"],["Prothese","Medizin","🦾","f"],["Gummihandschuh","Medizin","🧤","m"],["Verbandrolle","Medizin","🩹","f"],
+["Skalpell","Medizin","🔪","n"],["Blumenvase","Bestattung","🏺","f"],["Grabkerze","Bestattung","🕯️","f"],["Schwarze Krawatte","Bestattung","👔","f"],["Totengräberspaten","Bestattung","⛏️","m"],
+["Urne","Bestattung","⚱️","f"],["Spielkarte","Glücksspiel","🃏","f"],["Gezinkter Würfel","Glücksspiel","🎲","m"],["Pokerchip","Glücksspiel","🪙","m"],["Münze","Glücksspiel","🪙","f"],
+["Badezimmerwaage","Haushalt","⚖️","f"],["Kochtopf","Küche","🍲","m"],["Bratpfanne","Küche","🍳","f"],["Fleischklopfer","Küche","🔨","m"],["Salzstreuer","Küche","🧂","m"],
+["Thermoskanne","Haushalt","🧴","f"],["Ritterhelm","Rüstung","🪖","m"],["Kettenhemd","Rüstung","🛡️","n"],["Ehering","Relikt","💍","m"],["Gebetsbuch","Relikt","📖","n"],
+["Kerzenständer","Relikt","🕯️","m"],["Motorradhelm","Rüstung","🪖","m"],["Schweißgerät","Maschine","🔥","n"],["Zahnrad","Maschine","⚙️","n"],["Kolben","Maschine","⚙️","m"],
+["Metallplatte","Maschine","🛡️","f"],["Fernbedienung","Elektronik","📺","f"],["Gamepad","Elektronik","🎮","n"],["Diskette","Elektronik","💾","f"],["Altes Handy","Elektronik","📱","n"],
+["Kassettenrekorder","Elektronik","📻","m"],["Kopfhörer","Elektronik","🎧","m"],["Kabelmaus","Elektronik","🖱️","f"],["Druckerpatrone","Elektronik","🖨️","f"],["CD-ROM","Elektronik","💿","f"],
+["Taschenlampe","Elektronik","🔦","f"]
 ];
 
-const adjectives = ["Rostige","Verdächtig warme","Verbeulte","Flüsternde","Amtlich geprüfte","Blutige","Zeitversetzte","Heilige","Illegale","Omas","Verfluchte","Fabrikneue","Halb geschmolzene","Viel zu schwere","Unscheinbare","Gestohlene","Schlecht reparierte","Kosmische","Fettige","Unkündbare","Nasse","Überversicherte","Schief montierte","Grabkalte"];
+const adjectives = [
+{m:"Rostiger",f:"Rostige",n:"Rostiges"},
+{m:"Verdächtig warmer",f:"Verdächtig warme",n:"Verdächtig warmes"},
+{m:"Verbeulter",f:"Verbeulte",n:"Verbeultes"},
+{m:"Flüsternder",f:"Flüsternde",n:"Flüsterndes"},
+{m:"Amtlich geprüfter",f:"Amtlich geprüfte",n:"Amtlich geprüftes"},
+{m:"Blutiger",f:"Blutige",n:"Blutiges"},
+{m:"Zeitversetzter",f:"Zeitversetzte",n:"Zeitversetztes"},
+{m:"Heiliger",f:"Heilige",n:"Heiliges"},
+{m:"Illegaler",f:"Illegale",n:"Illegales"},
+{m:"Omas",f:"Omas",n:"Omas"},
+{m:"Verfluchter",f:"Verfluchte",n:"Verfluchtes"},
+{m:"Fabrikneuer",f:"Fabrikneue",n:"Fabrikneues"},
+{m:"Halb geschmolzener",f:"Halb geschmolzene",n:"Halb geschmolzenes"},
+{m:"Viel zu schwerer",f:"Viel zu schwere",n:"Viel zu schweres"},
+{m:"Unscheinbarer",f:"Unscheinbare",n:"Unscheinbares"},
+{m:"Gestohlener",f:"Gestohlene",n:"Gestohlenes"},
+{m:"Schlecht reparierter",f:"Schlecht reparierte",n:"Schlecht repariertes"},
+{m:"Kosmischer",f:"Kosmische",n:"Kosmisches"},
+{m:"Fettiger",f:"Fettige",n:"Fettiges"},
+{m:"Unkündbarer",f:"Unkündbare",n:"Unkündbares"},
+{m:"Nasser",f:"Nasse",n:"Nasses"},
+{m:"Überversicherter",f:"Überversicherte",n:"Überversichertes"},
+{m:"Schief montierter",f:"Schief montierte",n:"Schief montiertes"},
+{m:"Grabkalter",f:"Grabkalte",n:"Grabkaltes"}
+];
 const flavor = [
 "Niemand weiß, warum dieses Ding überhaupt funktioniert.",
 "Der Vorbesitzer bestand darauf, dass es 'Teil des Plans' sei.",
@@ -561,9 +605,9 @@ function rollCard(){
       else if(rr<hc+sc && state.availableSpecial.length) rare={kind:"special",text:pickUnique(state.availableSpecial,1,R)[0]};
 
       const base=itemBases[Math.floor(R()*itemBases.length)];
-      const adj=adjectives[Math.floor(R()*adjectives.length)];
+      const adj=adjectives[Math.floor(R()*adjectives.length)]; const adjWord=adj[base[3]]||adj.m;
       c={
-        id:state.nextId,base,name:adj+" "+base[0],rarity,normals,classProps:cps,rare,
+        id:state.nextId,base,name:adjWord+" "+base[0],rarity,normals,classProps:cps,rare,
         flavor:flavor[Math.floor(R()*flavor.length)]
       };
       c.analysis=analyzeClasses(c);
@@ -575,15 +619,102 @@ function rollCard(){
     renderCard(c);
   }catch(e){alert(e.message)}
 }
-function acceptCard(){
-  const c=state.preview;if(!c){alert("Erst eine Karte würfeln.");return}
-  const sig=signatureOf(c);if(state.usedSignatures.has(sig)){alert("Diese Karten-Signatur existierte bereits.");return}
+
+function createRolledCard(R){
+  const rarity=weightedPick(rarityTable,R);
+  const mode=document.getElementById("affixMode").value;
+  const nc=mode==="auto"?rarity.n:+document.getElementById("normalCount").value;
+  const cc=mode==="auto"?rarity.c:+document.getElementById("classCount").value;
+  const sc=Math.min(9.99,Math.max(0,+document.getElementById("specialChance").value))/100;
+  const hc=Math.min(.99,Math.max(0,+document.getElementById("hiddenChance").value))/100;
+
+  const normals=pickUnique(state.availableNormal,nc,R).map(name=>({name,value:rollValue(name,R,rarity.key)}));
+  const cps=pickUnique(state.availableClass,cc,R);
+  let rare=null;
+  const rr=R();
+  if(rr<hc && state.availableHidden.length) rare={kind:"hidden",text:pickUnique(state.availableHidden,1,R)[0]};
+  else if(rr<hc+sc && state.availableSpecial.length) rare={kind:"special",text:pickUnique(state.availableSpecial,1,R)[0]};
+
+  const base=itemBases[Math.floor(R()*itemBases.length)];
+  const adj=adjectives[Math.floor(R()*adjectives.length)];
+  const adjWord=adj[base[3]]||adj.m;
+  const c={
+    id:state.nextId,base,name:adjWord+" "+base[0],rarity,normals,classProps:cps,rare,
+    flavor:flavor[Math.floor(R()*flavor.length)]
+  };
+  c.analysis=analyzeClasses(c);
+  return c;
+}
+
+function bindCard(c){
+  const sig=signatureOf(c);
+  if(state.usedSignatures.has(sig)) return false;
   state.usedSignatures.add(sig);
   c.normals.forEach(p=>state.availableNormal=state.availableNormal.filter(x=>x!==p.name));
   c.classProps.forEach(p=>state.availableClass=state.availableClass.filter(x=>x.name!==p.name));
   if(c.rare?.kind==="special")state.availableSpecial=state.availableSpecial.filter(x=>x!==c.rare.text);
   if(c.rare?.kind==="hidden")state.availableHidden=state.availableHidden.filter(x=>x!==c.rare.text);
-  state.owned.push(c);state.nextId++;state.preview=null;updateUI();
+  state.owned.push(c);
+  state.nextId++;
+  return true;
+}
+
+function generateDeck(){
+  const size=Math.max(10,Math.min(40,+document.getElementById("deckSize").value||10));
+  const generated=[];
+  const R=rng();
+
+  for(let i=0;i<size;i++){
+    let card=null;
+    let attempts=0;
+    while(attempts<300){
+      try{
+        const candidate=createRolledCard(R);
+        if(!state.usedSignatures.has(signatureOf(candidate))){
+          card=candidate;
+          break;
+        }
+      }catch(e){
+        alert("Deck konnte nicht vollständig erstellt werden: "+e.message);
+        updateUI();
+        renderDeckSummary(generated);
+        return;
+      }
+      attempts++;
+    }
+    if(!card){
+      alert("Deck konnte nicht vollständig erstellt werden, weil keine neue einzigartige Karte mehr gefunden wurde.");
+      break;
+    }
+    bindCard(card);
+    generated.push(card);
+  }
+
+  state.preview=generated.length?generated[generated.length-1]:null;
+  if(state.preview) renderCard(state.preview);
+  updateUI();
+  renderDeckSummary(generated);
+}
+
+function renderDeckSummary(deck){
+  const el=document.getElementById("deckSummary");
+  if(!deck.length){el.innerHTML="Noch kein Deck erzeugt.";return}
+  const rarityCounts={};
+  const classCounts={};
+  deck.forEach(c=>{
+    rarityCounts[c.rarity.name]=(rarityCounts[c.rarity.name]||0)+1;
+    c.analysis.forEach(a=>classCounts[a.sub||a.cls]=(classCounts[a.sub||a.cls]||0)+1);
+  });
+  const rarityText=Object.entries(rarityCounts).map(([k,v])=>`${k}: ${v}`).join(" · ");
+  const classText=Object.entries(classCounts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`${k} ${v}`).join(" · ")||"Keine aktiven Klassen";
+  el.innerHTML=`<b>${deck.length} Karten erzeugt</b><br>${rarityText}<br><span class="ok">${classText}</span>
+  <div style="margin-top:8px">${deck.map(c=>`<span class="pill">#${String(c.id).padStart(5,"0")} ${escapeHtml(c.name)}</span>`).join("")}</div>`;
+}
+
+function acceptCard(){
+  const c=state.preview;if(!c){alert("Erst eine Karte würfeln.");return}
+  if(!bindCard(c)){alert("Diese Karten-Signatur existierte bereits.");return}
+  state.preview=null;updateUI();
 }
 function destroyItem(id){
   const idx=state.owned.findIndex(x=>x.id===id);if(idx<0)return;

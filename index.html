@@ -708,13 +708,21 @@ function renderDeckSummary(deck){
   const rarityText=Object.entries(rarityCounts).map(([k,v])=>`${k}: ${v}`).join(" · ");
   const classText=Object.entries(classCounts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`${k} ${v}`).join(" · ")||"Keine aktiven Klassen";
   el.innerHTML=`<b>${deck.length} Karten erzeugt</b><br>${rarityText}<br><span class="ok">${classText}</span>
-  <div style="margin-top:8px">${deck.map(c=>`<span class="pill">#${String(c.id).padStart(5,"0")} ${escapeHtml(c.name)}</span>`).join("")}</div>`;
+  <div style="margin-top:8px">${deck.map(c=>`<span class="pill" style="cursor:pointer" onclick="viewOwnedCard(${c.id})">#${String(c.id).padStart(5,"0")} ${escapeHtml(c.name)}</span>`).join("")}</div>`;
 }
 
 function acceptCard(){
   const c=state.preview;if(!c){alert("Erst eine Karte würfeln.");return}
   if(!bindCard(c)){alert("Diese Karten-Signatur existierte bereits.");return}
   state.preview=null;updateUI();
+}
+
+function viewOwnedCard(id){
+  const c=state.owned.find(x=>x.id===id);
+  if(!c)return;
+  renderCard(c);
+  const card=document.getElementById("card");
+  if(card) card.scrollIntoView({behavior:"smooth",block:"start"});
 }
 function destroyItem(id){
   const idx=state.owned.findIndex(x=>x.id===id);if(idx<0)return;
@@ -776,10 +784,10 @@ function updateUI(){
   sSpecial.textContent=state.availableSpecial.length;sHidden.textContent=state.availableHidden.length;
   sOwned.textContent=state.owned.length;sDead.textContent=state.destroyed.length;
   ownedList.innerHTML=state.owned.length?state.owned.map(c=>`<div class="itemrow">
-    <div><b>#${String(c.id).padStart(5,"0")} ${escapeHtml(c.name)}</b><br>
+    <div style="flex:1;cursor:pointer" onclick="viewOwnedCard(${c.id})"><b>#${String(c.id).padStart(5,"0")} ${escapeHtml(c.name)}</b><br>
     ${escapeHtml(c.rarity.name)} · ${c.analysis.length?c.analysis.map(x=>x.sub||x.cls).join(" + "):"keine Klasse"}
-    ${c.rare?" · "+(c.rare.kind==="hidden"?"HIDDEN":"Special"):""}</div>
-    <button class="danger" onclick="destroyItem(${c.id})">Zerstören</button></div>`).join(""):"Noch keine."
+    ${c.rare?" · "+(c.rare.kind==="hidden"?"HIDDEN":"Special"):""}<br><span class="small">Antippen zum Betrachten</span></div>
+    <div style="display:flex;gap:5px"><button class="ghost" onclick="viewOwnedCard(${c.id})">Ansehen</button><button class="danger" onclick="destroyItem(${c.id})">Zerstören</button></div></div>`).join(""):"Noch keine."
 }
 function resetWorld(){
   if(!confirm("Welt wirklich komplett zurücksetzen?"))return;

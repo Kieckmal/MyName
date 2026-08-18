@@ -182,7 +182,7 @@ button.ghost{background:#202735}
 .q1{background:#3a2d2d}.q2{background:#49362d}.q3{background:#51432c}.q4{background:#4f522f}
 .q5{background:#35533a}.q6{background:#2f514b}.q7{background:#2d485a}.q8{background:#3b3d68}
 .q9{background:#563d6f}.q10{background:#75531f;box-shadow:0 0 12px #f1b64d55,inset 0 0 0 1px #f3d58a55}
-.qualityline{font-size:11px;color:#c6cfda;margin-top:3px}
+.qualityline{font-size:11px;color:#c6cfda;margin-top:3px}.stars{color:#ffd66b;letter-spacing:1px;font-size:15px;text-shadow:0 0 7px #ffc84f55;margin-top:3px}.detailhint{font-size:10px;color:#8793a4;margin-top:2px}.mini-stars{color:#ffd66b;font-size:11px}
 
 .classbox{
   margin-top:10px;padding:10px;border-radius:12px;border:1px solid #3c4659;
@@ -900,6 +900,7 @@ function destroyItem(id){
   updateUI()
 }
 
+function starRating(c){const rolls=[...c.normals.map(x=>x.pct),...c.classProps.map(x=>x.pct)];const avg=rolls.reduce((a,b)=>a+b,0)/Math.max(1,rolls.length);const n=avg>=80?5:avg>=60?4:avg>=40?3:avg>=20?2:1;return {avg,n,text:"★".repeat(n)+"☆".repeat(5-n)}}
 function renderCard(c){
   const el=document.getElementById("card");
   const rarityClass=c.rare?.kind==="hidden"?"hidden":c.rarity.key;
@@ -921,7 +922,7 @@ function renderCard(c){
       <div>
         <div class="kicker">Unique Item Card</div>
         <div class="name">${escapeHtml(c.name)}</div>
-        <div class="id">#${String(c.id).padStart(5,"0")} · ${escapeHtml(c.base[1])}</div><div class="qualityline">Gesamt-Roll: <b>${qualityLabel(c.overallTier||5)}</b> · Stufe ${c.overallTier||5}/10</div>
+        <div class="id">#${String(c.id).padStart(5,"0")} · ${escapeHtml(c.base[1])}</div><div class="stars">${starRating(c).text}</div><div class="detailhint">Ø Roll ${starRating(c).avg.toFixed(1)}% · ${qualityLabel(c.overallTier||5)}</div>
       </div>
       <div class="rarity-badge">${escapeHtml(c.rare?.kind==="hidden"?"Hidden":c.rarity.name)}</div>
     </div>
@@ -930,8 +931,8 @@ function renderCard(c){
       <div class="obj">${c.base[2]}</div>
       <div class="art-label">${escapeHtml(c.base[0])}</div>
     </div>
-    <div class="type-row"><strong>${escapeHtml(c.base[0])}</strong><span class="slot">${c.normals.length} Normal · ${c.classProps.length} Klasse</span></div>
-    <div class="props">${props}${cps}${rare}</div>
+    <div class="type-row"><strong>${escapeHtml(c.base[0])}</strong><span class="slot">${c.normals.length} Stats · ${c.classProps.length} Affinitäten</span></div>
+    <div class="props"><div class="kicker" style="margin-top:5px">STATS</div>${props}<div class="kicker" style="margin-top:10px">KLASSEN-AFFINITÄTEN</div>${cps}${rare}</div>
     <div class="classbox">
       <div class="class-title">Klassenanalyse</div>
       <div class="class-main">${escapeHtml(classMain)}</div>
